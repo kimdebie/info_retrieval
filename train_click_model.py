@@ -6,6 +6,11 @@ data = "YandexRelPredChallenge.txt"
 
 def learn_model_parameters(data):
 
+    '''This method takes as input the Yandex click log. It first cleans the file
+    and then trains the alpha and gamma parameters for the PBM model on the basis
+    of this file. It saves the alphas and gammas (so they only have to be trained
+    once) to a csv and returns them.'''
+
     # Cleaning data
 
     completed_queries = []
@@ -74,7 +79,7 @@ def learn_model_parameters(data):
             if i%1000 == 0:
                 print(str(i) + " parameters trained in this round")
 
-            # take sessions and alpha for this particular Q-D pair
+            # take alpha and all sessions for this particular Q-D pair
             sess_qd = qd_pairs[qd_pairs["QueryDocPair"] == index]
             old_alpha = alphas[index]
 
@@ -128,12 +133,55 @@ def learn_model_parameters(data):
 
     return alphas, gammas
 
-learn_model_parameters(data)
+alphas, gammas = learn_model_parameters(data)
 
-# def predict_click_probability(ranked_list, alpha, gamma):
-#
-#     return click_probabilities
-#
-# def click_documents(document, probability):
-#
-#     return clicked # boolean
+def predict_click_probability(ranked_list, gammas):
+
+    '''This method takes as input a ranked list and a list of gamma parameters
+    that determine the examination probability per rank. The method calculates
+    its own alpha parameters. It returns the click probabilities of the ranked
+    list (also as a list).'''
+
+    # set epsilon to small value (prob that a not-relevant document is clicked)
+    epsilon = 1e-6
+
+    click_probabilities = []
+
+    for rank, item in enumerate(ranked_list):
+
+        # check relevance label to determine alphas
+        if relevance == 1:
+            alpha = 1-epsilon
+        else:
+            alpha = epsilon
+
+        # determine gamma
+        gamma = gammas[rank]
+
+        click_prob = alpha * gamma
+        click_probabilities.append(click_prob)
+
+    return click_probabilities
+
+
+
+def click_documents(ranked_list, click_probabilities):
+
+    '''This method takes as input a ranked list of documents and the click
+    probabilities for each rank. It returns a list of the same length with
+    Booleans indicating whether a document was clicked or not.'''
+
+    clicked = []
+
+    for rank, item in enumerate(ranked_list):
+
+        rand = random.uniform(0, 1)
+
+        if rand < click_probabilities[rank]:
+            click = True
+        else:
+            click = False
+
+        clicked.append(click)
+
+    return clicked
