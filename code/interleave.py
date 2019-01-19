@@ -57,18 +57,21 @@ class Interleaved:
         available_E = set([i["id"] for i in self.pair.rankings[0].ranking])
         available_P = set([i["id"] for i in self.pair.rankings[1].ranking])
         available = available_E.union(available_P)
+        team = [0,0]
 
         while len(available_E.intersection(available)) > 0 \
                 and len(available_P.intersection(available)) > 0:
 
             # Flip a coin to determine which ranker is first
-            for ranker in random.choice([[0,1],[1,0]]):
+            ranker = int(team[0] > team[1] or (team[0] == team[1]
+                         and random.choice([0,1]) == 1))
 
-                for document in self.pair.rankings[ranker].ranking:
-                    if document["id"] in available:
-                        interleaved_list.append((document["relevance"], ranker))
-                        available.remove(document["id"])
-                        break
+            for document in self.pair.rankings[ranker].ranking:
+                if document["id"] in available:
+                    interleaved_list.append((document["relevance"], ranker))
+                    available.remove(document["id"])
+                    team[ranker] += 1
+                    break
 
 
         self.list = interleaved_list
@@ -84,6 +87,6 @@ if __name__ == "__main__":
     P = Ranking(P_ranking)
     pair = Pair(E, P)
     i_list = Interleaved(pair)
-    for i in range(1000000):
+    for i in range(1):
         i_list.team_draft()
     print("Interleaving:", i_list.list)
