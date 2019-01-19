@@ -137,10 +137,10 @@ alphas, gammas = learn_model_parameters(data)
 
 def predict_click_probability(ranked_list, gammas):
 
-    '''This method takes as input a ranked list and a list of gamma parameters
-    that determine the examination probability per rank. The method calculates
-    its own alpha parameters. It returns the click probabilities of the ranked
-    list (also as a list).'''
+    '''This method takes as input a ranked list (Interleaved.list) and a list
+    of gamma parameters that determine the examination probability per rank.
+    The method calculates its own alpha parameters. It returns the click
+    probabilities of the ranked list (also as a list).'''
 
     # set epsilon to small value (prob that a not-relevant document is clicked)
     epsilon = 1e-6
@@ -148,6 +148,8 @@ def predict_click_probability(ranked_list, gammas):
     click_probabilities = []
 
     for rank, item in enumerate(ranked_list):
+
+        relevance = item[0]
 
         # check relevance label to determine alphas
         if relevance == 1:
@@ -167,9 +169,9 @@ def predict_click_probability(ranked_list, gammas):
 
 def click_documents(ranked_list, click_probabilities):
 
-    '''This method takes as input a ranked list of documents and the click
-    probabilities for each rank. It returns a list of the same length with
-    Booleans indicating whether a document was clicked or not.'''
+    '''This method takes as input a ranked list of documents (Interleaved.list)
+    and the click probabilities for each rank. It returns a list of the same
+    length with Booleans indicating whether a document was clicked or not.'''
 
     clicked = []
 
