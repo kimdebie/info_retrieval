@@ -1,6 +1,7 @@
 import pandas as pd
 import csv
 import random
+from collections import defaultdict
 
 data = "../data/YandexRelPredChallenge.txt"
 
@@ -56,7 +57,7 @@ def learn_model_parameters(data):
     # alpha (attractiveness) is defined per unique query-document pair
     alphas = {}
     for index in qd_pairs["QueryDocPair"].unique():
-        alphas[index] = 0.2
+        alphas[index] = 1
     print("Total alphas to be trained: " + str(len(alphas)))
 
     # gamma (examination) is defined per rank
@@ -64,16 +65,41 @@ def learn_model_parameters(data):
 
     # As we are primarily interested in gammas (we will discard alphas)
     # convergence is determined on the basis of gammas.
-    delta_gamma = 1
-    i = 0
+    delta_gammas = 1
+    rounds = 0
 
-    while delta_gamma > 0.3:
-        print("Round " + str(i))
-        i+= 1
+    while delta_gammas > 0.05:
+        print("Round " + str(rounds))
+        rounds+= 1
 
         print("Update alphas")
 
         # update one alpha for each QD pair
+        new_alphas = defaultdict(lambda:1)
+        qd_count = defaultdict(lambda:2)
+        
+        for i, session in qd_pairs.iterrows():
+            if i%1000 == 0:
+                print(str(i) + " parameters trained in this round")
+
+            # getting the relevant parameters for the formula
+            click_u = session["Clicked"]
+            old_gamma = gammas[session["Rank"]]
+            old_alpha = alphas[session["QueryDocPair"]]
+
+            # The Formula
+            new_alphas[session["QueryDocPair"]] += click_u + (1-click_u) * \
+             ((1-old_gamma)*old_alpha / 1-old_gamma*old_alpha)
+
+            qd_count[session["QueryDocPair"]] += 1
+
+        for key, value in qd_count.items():
+            new_alphas[key] /= value
+
+        alphas = new_alphas
+
+
+
         for i, index in enumerate(qd_pairs["QueryDocPair"].unique()):
 
             if i%1000 == 0:
@@ -84,7 +110,7 @@ def learn_model_parameters(data):
             old_alpha = alphas[index]
 
             # following the update formula for each session
-            sum_of_clicks_alpha = 0
+            sum_of_clicks_alpha = 1
             for i, session in sess_qd.iterrows():
 
                 # getting the relevant parameters for the formula
@@ -96,7 +122,7 @@ def learn_model_parameters(data):
                  ((1-old_gamma)*old_alpha / 1-old_gamma*old_alpha)
 
             # final update to this alpha
-            alphas[index] = 1/sess_qd.shape[0] * sum_of_clicks_alpha
+            alphas[index] = 1/(sess_qd.shape[0]+2) * sum_of_clicks_alpha
 
 
         print("Update gammas")
@@ -123,6 +149,7 @@ def learn_model_parameters(data):
             gammas[rank] = 1/len(sess_rank) * sum_of_clicks_gamma
             delta_gammas += abs(gammas[rank] - old_gamma)
 
+        print(gammas)
         print("Change in gammas: " + str(delta_gammas))
 
     alphas_df = pd.DataFrame.from_dict(alphas, orient='index')
