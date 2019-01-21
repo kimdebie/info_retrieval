@@ -3,15 +3,9 @@ import csv
 import random
 from collections import defaultdict
 
-data = "../data/YandexRelPredChallenge.txt"
+filename = "../data/YandexRelPredChallenge.txt"
 
-def learn_model_parameters(data):
-
-    '''This method takes as input the Yandex click log. It first cleans the file
-    and then trains the alpha and gamma parameters for the PBM model on the basis
-    of this file. It saves the alphas and gammas (so they only have to be trained
-    once) to a csv and returns them.'''
-
+def load_data(data):
     # Cleaning data
 
     completed_queries = []
@@ -41,6 +35,15 @@ def learn_model_parameters(data):
     headers = ['SessionID', 'TimePassed', 'TypeOfAction', 'QueryID', 'RegionID', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'ResultIDs', 'Clicked']
     qd_pairs = pd.DataFrame(completed_queries, columns=headers)
     qd_pairs = qd_pairs[['QueryID', 'ResultIDs', 'Clicked']]
+
+    return qd_pairs
+
+def learn_model_parameters(qd_pairs):
+
+    '''This method takes as input the Yandex click log. It first cleans the file
+    and then trains the alpha and gamma parameters for the PBM model on the basis
+    of this file. It saves the alphas and gammas (so they only have to be trained
+    once) to a csv and returns them.'''
 
     ## EM algorithm for finding optimal alpha and gamma ##
 
@@ -79,7 +82,6 @@ def learn_model_parameters(data):
 
                 # The Formula
                 new_alphas[(query, result)] += click_u + (1-click_u) * ((1-old_gamma)*old_alpha / (1-old_gamma*old_alpha))
-
 
         for key, value in qd_count.items():
             new_alphas[key] /= value
@@ -186,4 +188,30 @@ def click_documents(ranked_list, click_probabilities):
         clicked.append(click)
 
     return clicked
-get_params_from_file()
+
+def random_click_model(qd_pairs):
+
+    '''This method takes the dataset with all sessions and returns the click
+    probabilities trained using the random click model. Probabilities are returned
+    in a length of maximum rank for convenience.'''
+    max_rank = 3
+    clicks = 0
+    docs = 0
+
+    for i, session in qd_pairs.iterrows():
+        for rank in range(max_rank):
+            docs += 1
+            if session["Clicked"][rank]:
+                clicks += 1
+
+    click_prob = clicks / docs
+
+    click_probs = [click_prob] * max_rank
+
+    print(click_probs)
+
+    return click_probs
+
+qd_pairs = load_data(filename)
+print("data loaded")
+random_click_model(qd_pairs)
