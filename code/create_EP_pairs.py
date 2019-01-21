@@ -27,25 +27,18 @@ def calculate_ERR(ranking):
         elif idx == 1:
             rl2 = rl
 
-        # # update maximum
-        # if rl > max:
-        #     max = rl
-
     # calculate probability of stopping at first and second document
     prob1 = (2**rl1-1)/(2**max)
     prob2 = (2**rl2-1)/(2**max)
+    probs = [prob1, prob2]
 
     # calculate ERR as sum of products
     ERR = 0
-    for i in range(2,4):
-
-        if i == 2:
-            prod2 = (1 - prob1) * prob1 * (1 / i)
-            ERR += prod2
-
-        elif i == 3:
-            prod3 = (1 - prob1) * prob1 * (1 - prob2) * prob2 * (1 / i)
-            ERR += prod3
+    for r in range(len(probs)):
+        temp = 1
+        for i in range(r):
+            temp *= 1-probs[i]
+        ERR += temp*probs[r]/(r+1)
 
     return ERR
 
@@ -151,7 +144,27 @@ def main():
 
     return pairs
 
+def create_groups(pairs):
+    """
+    This function seperates pairs into groups based on delta_ERR intervals.
+    It returns a list of sublists; each sublists contains an object of class Pair
+    """
+
+    group1 = [p for p in pairs if (p.delta_ERR>=0.05 and p.delta_ERR<0.1)]
+    group2 = [p for p in pairs if (p.delta_ERR>=0.1 and p.delta_ERR<0.2)]
+    group3 = [p for p in pairs if (p.delta_ERR>=0.2 and p.delta_ERR<0.3)]
+    group4 = [p for p in pairs if (p.delta_ERR>=0.3 and p.delta_ERR<0.4)]
+    group5 = [p for p in pairs if (p.delta_ERR>=0.4 and p.delta_ERR<0.5)]
+    group6 = [p for p in pairs if (p.delta_ERR>=0.5 and p.delta_ERR<0.6)]
+    group7 = [p for p in pairs if (p.delta_ERR>=0.6 and p.delta_ERR<0.7)]
+    group8 = [p for p in pairs if (p.delta_ERR>=0.7 and p.delta_ERR<0.8)]
+    group9 = [p for p in pairs if (p.delta_ERR>=0.8 and p.delta_ERR<0.9)]
+    group10 = [p for p in pairs if (p.delta_ERR>=0.9 and p.delta_ERR<=0.95)]
+
+    data = [group1, group2, group3, group4, group5, group6, group7, \
+            group8, group9, group10]
+    return data
+
 if __name__ == '__main__':
     pairs = main()
-    # remove pairs with delta_ERR lower than 0.05
-    data = [p for p in pairs if p.delta_ERR>=0.05]
+    data = create_groups(pairs)
