@@ -16,21 +16,20 @@ class Pair:
 
 def calculate_ERR(ranking):
 
-    rl1, rl2, max = 0, 0, 0
+    rl1, rl2, max = 0, 0, 1
 
-    # find maximum of relevance labels
+    # find relevance labels of first and second document
     for idx, docu in enumerate(ranking):
         rl = docu['relevance']
 
-        # store relevance label of first and second document
         if idx == 0:
             rl1 = rl
         elif idx == 1:
             rl2 = rl
 
-        # update maximum
-        if rl > max:
-            max = rl
+        # # update maximum
+        # if rl > max:
+        #     max = rl
 
     # calculate probability of stopping at first and second document
     prob1 = (2**rl1-1)/(2**max)
@@ -154,5 +153,5 @@ def main():
 
 if __name__ == '__main__':
     pairs = main()
-    # remove pairs with deltaERR lower than 0.05
+    # remove pairs with delta_ERR lower than 0.05
     data = [p for p in pairs if p.delta_ERR>=0.05]
