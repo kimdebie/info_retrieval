@@ -126,7 +126,7 @@ def get_gammas_from_file():
     '''Use this method to load gammas when parameters are already trained.'''
 
     try:
-        gammas = pd.read_csv('../data/trained_gammas3.csv')
+        gammas = pd.read_csv('../data/trained_gammas.csv')
         gammas = gammas['gammas'].tolist()
 
         return gammas
